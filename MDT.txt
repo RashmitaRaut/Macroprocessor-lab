@@ -1,0 +1,10 @@
+1     DEMO &ARG1 &ARG2
+2     READ &ARG1
+3     ADD BREG ='5'
+4     PRINT &ARG2
+5     MEND
+6     POR &X &Z
+7     SUB &Z ='6'
+8     MOVER &ZAREA
+9     ADD &Z &X
+10     MEND
