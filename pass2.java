@@ -1,113 +1,82 @@
-import java.io.*; 
-import java.util.*; 
-public class pass2 { 
- public static void main(String[] args) throws IOException { 
- String str, tokens[], temp_arr[]; 
- int temp_num = 0, flag = 0; 
- 
- ArrayList<String[]> mdt = new ArrayList<String[]>(); 
- ArrayList<String[]> mnt = new ArrayList<String[]>(); 
- ArrayList<String[]> ala = new ArrayList<String[]>(); 
- 
- File input = new File("C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\input.txt"); 
- File output = new File("C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\expanded"); 
- File filemnt = new File("C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\MNT.txt"); 
- File filemdt = new File("C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\MDT.txt"); 
- File fileala = new File("C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\ALA.txt"); 
- 
- FileWriter fw = new FileWriter("expanded"); 
- BufferedWriter bw = new BufferedWriter(fw); 
- 
- // fill arraylists with file contents 
- // mnt 
- Scanner fileReader = new Scanner(filemnt); 
- while(fileReader.hasNextLine()) { 
- str = fileReader.nextLine(); 
- tokens = str.split("[ \\n\\t,]"); 
- 
- mnt.add(new String[] {tokens[0], tokens[1], 
-tokens[2]}); 
- } 
- fileReader.close(); 
- 
- // mdt 
- fileReader = new Scanner(filemdt); 
- while(fileReader.hasNextLine()) { 
- str = fileReader.nextLine(); 
- tokens = str.split("[ \\n\\t,]"); 
- 
- mdt.add(new String[] {"", "", "", ""}); 
- for(int i = 0; i < tokens.length; i++) { 
- mdt.get(temp_num)[i] = tokens[i]; 
- } 
- temp_num++; 
- } 
- fileReader.close(); 
- 
- // ala 
- fileReader = new Scanner(fileala); 
- while(fileReader.hasNextLine()) { 
- str = fileReader.nextLine(); 
- tokens = str.split("[ \\n\\t,]"); 
- 
- ala.add(new String[] {tokens[0], tokens[1], 
-tokens[2]}); 
- } 
- fileReader.close(); 
- 
- // replace the formal arguments in mdt with actual arguments from ala 
- for(int h = 0; h < ala.size(); h++) { 
- for(int i = 1; i < mdt.size(); i++) { 
- temp_arr = mdt.get(i); 
- for(int j = 0; j < temp_arr.length; j++) { 
- if(temp_arr[j].contentEquals(ala.get(h)[0])) 
-{ 
- mdt.get(i)[j] = ala.get(h)[2]; 
- } 
- } 
- } 
- } 
- 
- // expand macro calls 
- fileReader = new Scanner(input); 
- while(fileReader.hasNextLine()) { 
- str = fileReader.nextLine(); 
- tokens = str.split("[ \\n\\t,]"); 
- 
- for(int i = 0; i < mnt.size(); i++) { 
- if(str.contains(mnt.get(i)[1])) { 
- temp_num = Integer.parseInt(mnt.get(i)[2]); 
- 
- while(!mdt.get(temp_num)[1].contentEquals("MEND")) { 
- for(int k = 1; k < 
-mdt.get(temp_num).length; k++) { 
- bw.write(mdt.get(temp_num)[k] + " "); 
- } 
- temp_num++; 
- bw.write("\n"); 
- } 
- flag = 1; 
- i += mnt.size(); // skips the rest of the loop 
- } 
- else { 
- flag = 0; 
- } 
-// System.out.println("set flag " + flag); 
- } 
- 
- if(flag == 0) { 
-// System.out.println("check flag " + flag); 
- bw.write(str); 
- bw.write("\n"); 
- } 
- } 
- bw.close(); 
- fileReader.close(); 
- 
- fileReader = new Scanner(output); 
- while(fileReader.hasNextLine()) { S
- str = fileReader.nextLine();
- System.out.println(str);
- }
- fileReader.close();
-} }
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class pass2 {
+    public static void main(String[] args) {
+        String inputFilePath = "C:\\Users\\Rashmita Raut\\Desktop\\Macroprocessor lab\\input.txt";
+        String outputFilePath = "output.txt";
+        String mntFilePath = "MNT.txt";
+        String mdtFilePath = "MDT.txt";
+        String alaFilePath = "ALA.txt";
+
+        Map<String, Integer> alaMap = new HashMap<>();
+        Map<Integer, List<String>> mdtMap = new HashMap<>();
+        Map<String, Integer> mntMap = new HashMap<>();
+
+        try {
+            // Reading ALA Table
+            BufferedReader alaReader = new BufferedReader(new FileReader(alaFilePath));
+            String alaLine;
+            while ((alaLine = alaReader.readLine()) != null) {
+                String[] parts = alaLine.split("\\s+");
+                alaMap.put(parts[1], Integer.parseInt(parts[0]));
+            }
+            alaReader.close();
+
+            // Reading MDT Table
+            BufferedReader mdtReader = new BufferedReader(new FileReader(mdtFilePath));
+            String mdtLine;
+            int mdtIndex = 1;
+            while ((mdtLine = mdtReader.readLine()) != null) {
+                String[] parts = mdtLine.split("\\s+");
+                mdtMap.put(mdtIndex, List.of(parts));
+                mdtIndex++;
+            }
+            mdtReader.close();
+
+            // Reading MNT Table
+            BufferedReader mntReader = new BufferedReader(new FileReader(mntFilePath));
+            String mntLine;
+            while ((mntLine = mntReader.readLine()) != null) {
+                String[] parts = mntLine.split("\\s+");
+                mntMap.put(parts[1], Integer.parseInt(parts[0]));
+            }
+            mntReader.close();
+
+            // Perform macro expansion
+            BufferedReader inputReader = new BufferedReader(new FileReader(inputFilePath));
+            BufferedWriter outputWriter = new BufferedWriter(new FileWriter(outputFilePath));
+            String line;
+            while ((line = inputReader.readLine()) != null) {
+                if (mntMap.containsKey(line.trim())) {
+                    int mntIndex = mntMap.get(line.trim());
+                    List<String> expandedMacro = mdtMap.get(mntIndex);
+                    for (String macroLine : expandedMacro) {
+                        if (macroLine.startsWith("&")) {
+                            int argIndex = alaMap.get(macroLine);
+                            String arg = line.split("\\s+")[argIndex];
+                            outputWriter.write(arg + " ");
+                        } else {
+                            outputWriter.write(macroLine + " ");
+                        }
+                    }
+                    outputWriter.newLine();
+                } else {
+                    outputWriter.write(line);
+                    outputWriter.newLine();
+                }
+            }
+            inputReader.close();
+            outputWriter.close();
+
+            System.out.println("Macro expansion completed. Output written to " + outputFilePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
